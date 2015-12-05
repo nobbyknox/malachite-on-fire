@@ -1,5 +1,6 @@
 var { ToggleButton } = require('sdk/ui/button/toggle');
 var panels = require("sdk/panel");
+var tabs = require("sdk/tabs");
 var self = require("sdk/self");
 
 var data = require("sdk/self").data;
@@ -33,3 +34,13 @@ function handleChange(state) {
 function handleHide() {
   button.state('window', {checked: false});
 }
+
+panel.port.on("goingHome", function() {
+  console.log('In index.js - going home');
+  panel.hide();
+});
+
+panel.port.on("bookmarkPage", function() {
+  console.log('In index.js - bookmarking: ' + tabs.activeTab.url);
+  panel.hide();
+});
