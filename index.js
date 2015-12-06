@@ -3,6 +3,7 @@ var {
 } = require('sdk/ui/button/toggle');
 var panels = require("sdk/panel");
 var tabs = require("sdk/tabs");
+var Request = require("sdk/request").Request;
 var self = require("sdk/self");
 
 var {
@@ -14,11 +15,11 @@ var cookieManager = Cc["@mozilla.org/cookiemanager;1"].getService(Ci.nsICookieMa
 var data = require("sdk/self").data;
 var contentScriptFile = data.url("get-action.js");
 
-var baseUrl = 'http://127.0.0.1:3003'
+var baseUrl = 'http://www.leonieknox.com:3003'
 
 var button = ToggleButton({
-    id: "my-button",
-    label: "my button",
+    id: "bookmarkly-button",
+    label: "Bookmarkly",
     icon: {
         "16": "./icon-16.png",
         "32": "./icon-32.png",
@@ -42,7 +43,7 @@ var noTokenPanel = panels.Panel({
 });
 
 function handleChange(state) {
-    if (state.checked) {
+    if(state.checked) {
         panel.show({
             position: button
         });
@@ -62,30 +63,58 @@ panel.port.on("goingHome", function () {
 
 panel.port.on("bookmarkPage", function () {
 
-    var cookies = cookieManager.getCookiesFromHost("leonieknox.com");
-    // var cookies = cookieManager.enumerator
-    var foundCookie = false;
+    panel.hide();
 
-    while (cookies.hasMoreElements()) {
+    var cookies = cookieManager.getCookiesFromHost("leonieknox.com");  // leonieknox.com
+    // var cookies = cookieManager.enumerator
+    var cookieFound = false;
+    var token = '';
+
+    while(cookies.hasMoreElements()) {
         var cookie = cookies.getNext().QueryInterface(Ci.nsICookie2);
 
-        if (cookie.name === 'bookmarklyLogin') {
+        if(cookie.name === 'bookmarklyLogin') {
             dump(cookie.host + ";" + cookie.name + "=" + cookie.value + "\n");
             var cookieValue = JSON.parse(unescape(cookie.value));
             // console.log(JSON.stringify(cookieValue));
             // console.log('Screen name: ' + cookieValue['screenName']);
             console.log('Token: ' + cookieValue.token);
-            foundCookie = true;
+            cookieFound = true;
+            token = cookieValue.token;
         }
     }
 
-    if (!foundCookie) {
+    if(cookieFound) {
+
+        console.log('Will now bookmark ' + tabs.activeTab.url + '  -  ' + tabs.activeTab.title);
+
+        var payload = {
+            model: {
+                title: tabs.activeTab.title,
+                address: tabs.activeTab.url,
+                rating: 1,
+                starred: 0
+            },
+            groupNames: [],
+            tagNames: []
+        };
+
+        var options = {
+            url: baseUrl + '/bookmarks?token=' + token,
+            contentType: 'application/json',
+            content: JSON.stringify(payload),
+
+            onComplete: function(response) {
+                console.log('Page bookmarked');
+            }
+        };
+
+        Request(options).post();
+    }
+    else {
         noTokenPanel.show({
             position: button
         });
     }
 
-    console.log('Will now bookmark ' + tabs.activeTab.url + '  -  ' + tabs.activeTab.title);
-
-    panel.hide();
 });
