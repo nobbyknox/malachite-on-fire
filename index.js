@@ -38,7 +38,7 @@ var panel = panels.Panel({
 var noTokenPanel = panels.Panel({
     contentURL: self.data.url("no-token.html"),
     width: 300,
-    height: 200
+    height: 160
 });
 
 function handleChange(state) {
@@ -84,6 +84,8 @@ panel.port.on("bookmarkPage", function () {
             position: button
         });
     }
+
+    console.log('Will now bookmark ' + tabs.activeTab.url + '  -  ' + tabs.activeTab.title);
 
     panel.hide();
 });
