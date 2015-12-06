@@ -3,6 +3,11 @@ var panels = require("sdk/panel");
 var tabs = require("sdk/tabs");
 var self = require("sdk/self");
 
+var {Cc, Ci} = require("chrome");
+// var cookieSvc = Cc["@mozilla.org/cookieService;1"].getService(Ci.nsICookieService);
+
+var cookieManager = Cc["@mozilla.org/cookiemanager;1"].getService(Ci.nsICookieManager2);
+
 var data = require("sdk/self").data;
 var contentScriptFile = data.url("get-action.js");
 
@@ -41,6 +46,21 @@ panel.port.on("goingHome", function() {
 });
 
 panel.port.on("bookmarkPage", function() {
-  console.log('In index.js - bookmarking: ' + tabs.activeTab.url);
+
+  var cookies = cookieManager.getCookiesFromHost("leonieknox.com");
+  // var cookies = cookieManager.enumerator
+
+  while (cookies.hasMoreElements()) {
+    var cookie = cookies.getNext().QueryInterface(Ci.nsICookie2);
+
+    if (cookie.name === 'bookmarklyLogin') {
+        dump(cookie.host + ";" + cookie.name + "=" + cookie.value + "\n");
+        var cookieValue = JSON.parse(unescape(cookie.value));
+        // console.log(JSON.stringify(cookieValue));
+        // console.log('Screen name: ' + cookieValue['screenName']);
+        console.log('Token: ' + cookieValue.token);
+    }
+  }
+
   panel.hide();
 });
